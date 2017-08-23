@@ -1,4 +1,5 @@
 textarea, label, button {
+  display: block;
   margin: 1em;
 }
 
@@ -7,8 +8,4 @@ textarea {
   vertical-align: top;
   padding: 0.5em;
   font-size: 1em;
-}
-
-button {
-  display: block;
 }
