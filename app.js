@@ -12,7 +12,7 @@ window.app = (function () {
   function output () {
     var outputLength = parseInt($('input#wordcount').val()),
         outputString = "";
-    console.log(outputLength);
+
     for (var i = 0; i < outputLength; i++) {
       outputString += "a";
     }
@@ -20,30 +20,34 @@ window.app = (function () {
     $('textarea#textoutput').val(outputString);
   }
 
-  /* Takes a string and generates an array of unique words (again strings)
+  /* Takes an array of strings and generates an array of unique words (again strings)
      appearing in the argument string. */
-  function generateUniqueWordArray (textInput) {
-    return [];
+  function generateUniqueWordArray (inputWords) {
+    return inputWords.reduce(function (previousWords, word, wordIndex, inputWords) {
+      if (previousWords.indexOf(word) === -1) {
+        previousWords.push(word);
+      }
+      return previousWords;
+    }, []);
   }
 
   function run (textInput) {
-    // var uniqueWordArray = generateUniqueWordArray(textInput),
-    //     wordArray = splitTextInputIntoWords(textInput),
-    //     numberOfInputs = 3,
-    //     numberOfOutputs = uniqueWordArray.length,
-    //     numberOfHiddenNeurons = uniqueWordArray.length / 2, // experiment with this
-    //     numberOfHiddenLayers = 1, // usually the best default
-    //     weightRange = [-0.5, 0.5],
-    //     network = initialiseNeuronalNetwork (numberOfInputs, numberOfOutputs, numberOfHiddenNeurons, numberOfHiddenLayers, weightRange);
     var wordArray = splitTextInputIntoWords(textInput),
-        network = [],
-        numberOfInputs = 3;
+        uniqueWordArray = generateUniqueWordArray(wordArray),
+        numberOfInputs = 3,
+        numberOfOutputs = uniqueWordArray.length,
+        numberOfHiddenNeurons = uniqueWordArray.length / 2, // experiment with this
+        numberOfHiddenLayers = 1, // usually the best default
+        weightRange = [-0.5, 0.5],
+        network = initialiseNeuronalNetwork (numberOfInputs, numberOfOutputs, numberOfHiddenNeurons, numberOfHiddenLayers, weightRange);
+
     // train network; start by selecting the first word (i = 1)
     for (var i = 1; i <= wordArray.length; i++) {
       var wordInput = getWordsForCurrentIteration(wordArray, numberOfInputs, i);
       trainNetwork(network, wordInput);
     }
-
+    console.log(wordArray.length);
+    console.log(uniqueWordArray.length);
     // output on html page
     output();
   }
