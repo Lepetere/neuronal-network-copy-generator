@@ -19,7 +19,13 @@
       <label for="textinput">Enter text here (prefilled for ease of use):</label>
       <textarea name="textinput" id="textinput" placeholder="Paste text to train the network here" rows="20" cols="120"></textarea>
 
-      <button type="button" id="run">run network</button>
+      <label for="wordcount">Number of words desired for generated copy:</label>
+      <input type="text" name="wordcount" id="wordcount" />
+
+      <button type="button" id="run">run network &amp; generate copy</button>
+
+      <label for="textoutput">Output:</label>
+      <textarea readonly name="textoutput" id="textoutput" rows="8" cols="120"></textarea>
     </form>
   </body>
 </html>

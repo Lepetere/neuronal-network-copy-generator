@@ -9,6 +9,17 @@ window.app = (function () {
     });
   }
 
+  function output () {
+    var outputLength = parseInt($('input#wordcount').val()),
+        outputString = "";
+    console.log(outputLength);
+    for (var i = 0; i < outputLength; i++) {
+      outputString += "a";
+    }
+
+    $('textarea#textoutput').val(outputString);
+  }
+
   /* Takes a string and generates an array of unique words (again strings)
      appearing in the argument string. */
   function generateUniqueWordArray (textInput) {
@@ -32,6 +43,9 @@ window.app = (function () {
       var wordInput = getWordsForCurrentIteration(wordArray, numberOfInputs, i);
       trainNetwork(network, wordInput);
     }
+
+    // output on html page
+    output();
   }
 
   /* Initialises the neuronal network.
@@ -50,7 +64,7 @@ window.app = (function () {
    *  - iteration: the training iteration/epoch; equals the word position in wordArray that the epoch is focused on
    */
   function trainNetwork (networkLayers, wordInput) {
-    console.log(wordInput);
+    // console.log(wordInput);
   }
 
   /*
