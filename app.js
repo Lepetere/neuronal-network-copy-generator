@@ -37,13 +37,11 @@ window.app = (function () {
         numberOfUniqueWords = uniqueWordArray.length,
         numberOfInputs = 3, // how many words are used to train the network; this includes the output word plus (numberOfInputs - 1) preceding words
         numberOfHiddenLayers = 1, // 1 is usually the best default
-        numberOfHiddenNeurons = Math.round(uniqueWordArray.length * 1), // experiment with this
+        numberOfHiddenNeurons = Math.round(uniqueWordArray.length / 2), // experiment with this
         weightRange = [0, 1],
         learningRate = 0.1, // experiment with this
         network = initialiseNeuronalNetwork (numberOfUniqueWords, numberOfInputs, numberOfHiddenLayers, numberOfHiddenNeurons, weightRange);
-    console.log(numberOfHiddenNeurons);
-    console.log(numberOfUniqueWords);
-    console.log(network);
+
     // train network; start by selecting the first word (i = 1)
     for (var i = 1; i <= wordArray.length; i++) {
       var wordInput = getWordsForCurrentIteration(wordArray, numberOfInputs, i);
@@ -52,6 +50,7 @@ window.app = (function () {
 
     // output on html page
     output();
+    console.log(calculateOutput(network, uniqueWordArray, ["In", "my", "first"]));
   }
 
   /* Initialises the neuronal network.
@@ -97,10 +96,57 @@ window.app = (function () {
   }
 
   /*
+   * Runs an input of words through the network to calculate the activation pattern on the output layer.
+   */
+  function calculateOutput (network, uniqueWordArray, precedingWords) {
+    // 1st step: match the precedingWords input to the uniqueWordArray to find out which input neurons should be activated
+    // generate an array of the form [0, 0, 1, 0, ...] that represents the input signal and that later can be multiplied by the network weights
+    const inputSignal = [];
+    for (let i = 0; i < uniqueWordArray.length; i++) {
+      let isMatch = false;
+      for (let w = 0; w < precedingWords.length; w++) {
+        if (uniqueWordArray[i] === precedingWords[w]) {
+          isMatch = true;
+        }
+      }
+      inputSignal.push(isMatch ? 1 : 0);
+    }
+
+    // 2nd step: pass the input signals through the network and determine output
+    return network.reduce((tempResult, currentLayer) => {
+      const numberOfNeuronsInNextLayer = currentLayer[0].length;
+      const nextLayer = [];
+
+      for (let n = 0; n < numberOfNeuronsInNextLayer; n++) {
+        nextLayer.push(0);
+      }
+
+      // multiply each input value or temporary hidden layer value with the weight assigned to the link to the next layer
+      for (let c = 0; c < currentLayer.length; c++) {
+        for (let n = 0; n < numberOfNeuronsInNextLayer; n++) {
+          nextLayer[n] += tempResult[c] * currentLayer[c][n];
+        }
+      }
+
+      // normalise the neuron values of next layer
+      for (let n = 0; n < numberOfNeuronsInNextLayer; n++) {
+        nextLayer[n] = activationFunction(nextLayer[n], numberOfNeuronsInNextLayer);
+      }
+
+      return nextLayer;
+    }, inputSignal);
+  }
+
+  /*
    * Uses the network to make a prediction of the word that will most likely follow the words passed in precedingWords.
    */
-  function makePrediction (network, precedingWords) {
+  function makePrediction () {
 
+  }
+
+  function activationFunction (x, scaleY) {
+    // sigmoid function
+    return 1 / (1 + Math.pow(Math.E, -(x/scaleY)));
   }
 
   /*
