@@ -34,41 +34,73 @@ window.app = (function () {
   function run (textInput) {
     var wordArray = splitTextInputIntoWords(textInput),
         uniqueWordArray = generateUniqueWordArray(wordArray),
-        numberOfInputs = 3,
-        numberOfOutputs = uniqueWordArray.length,
-        numberOfHiddenNeurons = uniqueWordArray.length / 2, // experiment with this
-        numberOfHiddenLayers = 1, // usually the best default
-        weightRange = [-0.5, 0.5],
-        network = initialiseNeuronalNetwork (numberOfInputs, numberOfOutputs, numberOfHiddenNeurons, numberOfHiddenLayers, weightRange);
-
+        numberOfUniqueWords = uniqueWordArray.length,
+        numberOfInputs = 3, // how many words are used to train the network; this includes the output word plus (numberOfInputs - 1) preceding words
+        numberOfHiddenLayers = 1, // 1 is usually the best default
+        numberOfHiddenNeurons = Math.round(uniqueWordArray.length * 1), // experiment with this
+        weightRange = [0, 1],
+        learningRate = 0.1, // experiment with this
+        network = initialiseNeuronalNetwork (numberOfUniqueWords, numberOfInputs, numberOfHiddenLayers, numberOfHiddenNeurons, weightRange);
+    console.log(numberOfHiddenNeurons);
+    console.log(numberOfUniqueWords);
+    console.log(network);
     // train network; start by selecting the first word (i = 1)
     for (var i = 1; i <= wordArray.length; i++) {
       var wordInput = getWordsForCurrentIteration(wordArray, numberOfInputs, i);
-      trainNetwork(network, wordInput);
+      trainNetwork(network, wordInput, learningRate);
     }
-    console.log(wordArray.length);
-    console.log(uniqueWordArray.length);
+
     // output on html page
     output();
   }
 
   /* Initialises the neuronal network.
-     Returns an array of arrays where the latter represent the network layers. */
-  function initialiseNeuronalNetwork (numberOfInputs, numberOfOutputs, numberOfHiddenNeurons, numberOfHiddenLayers, weightRange) {
+   * Returns an array of arrays of arrays of weights within the bounds of [weightRange].
+   *  1st array: the layers of the network
+   *  2nd array: a number of arrays that represent the input/output words
+   *  3rd array: contain the weights of those words'/nodes' connections to other words/nodes
+   */
+  function initialiseNeuronalNetwork (numberOfUniqueWords, numberOfInputs, numberOfHiddenLayers, numberOfHiddenNeurons, weightRange) {
+    var network = [];
 
+    // Intialise network with random weights between [weightRange] // TO DO: approximate normal distribution
+    for (var l = 0; l < numberOfHiddenLayers + 1 /* +1 for input layer */; l++) {
+      var layer = [],
+          numberOfNeurons = l === 0 ? numberOfUniqueWords : numberOfHiddenNeurons,
+          numberOfConnections = l === numberOfHiddenLayers ? numberOfUniqueWords : numberOfHiddenNeurons;
+
+      for (var n = 0; n < numberOfNeurons; n++) {
+        var connections = []; // the connections of one neuron to the next layer
+        for (var c = 0; c < numberOfConnections; c++) {
+          connections.push(Math.random.apply(weightRange));
+        }
+        layer.push(connections);
+      }
+
+      network.push(layer);
+    }
+
+    return network;
   }
 
   /*
-   * Executes one epoch of training the network.
+   * Executes one iteration of training the network.
    *
    * Arguments:
    *  - networkLayers: an array of network layers (again arrays) which will be changed as part of the training process (side effects)
    *  - wordArray: an array of the text input with periods occuring as words of their own, other punctuation marks removed
-   *  - numberOfInputs: the number of words that should be considered to train and trigger the network
-   *  - iteration: the training iteration/epoch; equals the word position in wordArray that the epoch is focused on
+   *  - learningRate: a factor between 0 and 1 that determines how fast the network should adapt to the learning input
+   *  - iteration: the training iteration; equals the word position in wordArray that the epoch is focused on
    */
-  function trainNetwork (networkLayers, wordInput) {
+  function trainNetwork (networkLayers, wordInput, learningRate, iteration) {
     // console.log(wordInput);
+  }
+
+  /*
+   * Uses the network to make a prediction of the word that will most likely follow the words passed in precedingWords.
+   */
+  function makePrediction (network, precedingWords) {
+
   }
 
   /*
