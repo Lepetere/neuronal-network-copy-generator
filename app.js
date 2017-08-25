@@ -40,17 +40,17 @@ window.app = (function () {
         numberOfHiddenLayers = 1, // 1 is usually the best default
         numberOfHiddenNeurons = Math.round(uniqueWordArray.length / 2), // experiment with this
         weightRange = [0, 1],
-        learningRate = 0.1, // experiment with this
+        learningRate = 0.2, // experiment with this
         network = initialiseNeuronalNetwork (numberOfUniqueWords, numberOfInputs, numberOfHiddenLayers, numberOfHiddenNeurons, weightRange);
 
     // train network; start by selecting the first word (i = 1)
     for (var i = 1; i <= wordArray.length; i++) {
       var wordInput = getWordsForCurrentIteration(wordArray, numberOfInputs, i);
-      trainNetwork(network, wordInput, learningRate);
+      trainNetwork(network, uniqueWordArray, wordInput, learningRate, i);
     }
 
     // output on html page
-    output(makePrediction(network, uniqueWordArray, ["In", "my", "first"]));
+    output(uniqueWordArray[makePrediction(network, uniqueWordArray, ["In", "my", "first"])]);
   }
 
   /* Initialises the neuronal network.
@@ -84,15 +84,41 @@ window.app = (function () {
 
   /*
    * Executes one iteration of training the network.
+   * Side effect: alters the network permanently.
    *
    * Arguments:
-   *  - networkLayers: an array of network layers (again arrays) which will be changed as part of the training process (side effects)
+   *  - network: an array of network layers (again arrays) which will be changed as part of the training process (side effects)
    *  - wordArray: an array of the text input with periods occuring as words of their own, other punctuation marks removed
    *  - learningRate: a factor between 0 and 1 that determines how fast the network should adapt to the learning input
-   *  - iteration: the training iteration; equals the word position in wordArray that the epoch is focused on
+   *  - iteration: the training iteration; equals the word position in uniqueWordArray that the iteration is focused on
    */
-  function trainNetwork (networkLayers, wordInput, learningRate, iteration) {
-    // console.log(wordInput);
+  function trainNetwork (network, uniqueWordArray, wordInput, learningRate, iteration) {
+    // 1st step: calculate network output by feeding in preceding words
+    const precedingWords = wordInput.reduce((output, word, i, wordInput) => {
+      if (i < wordInput.length - 1) {
+        output.push(word);
+      }
+      return output;
+    }, []);
+    const prediction = calculateOutput(network, uniqueWordArray, precedingWords);
+
+    // 2nd step: feed the error back into the network
+    //  --> weigh up the weights leading to the desired output word
+    //  --> weigh down the weights leading to the wrongly calculated output word
+    //  --> do nothing if the predicted output is the same as the actual output
+
+    // iterate through the network layers from the back
+    if (iteration !== prediction) {
+      for (let l = network.length - 1; l >= 0; l--) {
+        let layer = network[l];
+        for (let n = 0; n < network[l].length; n++) {
+          // subtract the learningRate from the weights leading to the wrong answer, add it to the weights leading to the correct one
+          // divide by network depth from the back & round off using activation function
+          layer[n][iteration] =+ (learningRate / (network.length - l));
+          layer[n][prediction] =- (learningRate / (network.length - l));
+        }
+      }
+    }
   }
 
   /*
@@ -139,21 +165,22 @@ window.app = (function () {
 
   /*
    * Uses the network to make a prediction of the word that will most likely follow the words passed in precedingWords.
+   * Returns an index (zero based) that can then be used to look up the word in uniqueWordArray.
    */
   function makePrediction (network, uniqueWordArray, precedingWords) {
     let outputLayer = calculateOutput(network, uniqueWordArray, precedingWords),
-        outputWord;
-    console.log(outputLayer);
+        outputIndex;
+
     for (let i = 0; i < outputLayer.length; i++) {
       if (i === 0) {
-        outputWord = uniqueWordArray[i];
+        outputIndex = i;
       }
       else if (outputLayer[i] > outputLayer[i - 1]) {
-        outputWord = uniqueWordArray[i];
+        outputIndex = i;
       }
     }
 
-    return outputWord;
+    return outputIndex;
   }
 
   function activationFunction (x, scaleY) {
