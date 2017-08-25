@@ -3,18 +3,19 @@ window.app = (function () {
   function init () {
     // input default text
     $('textarea#textinput').val(window.exampleCopy);
+    $('input#wordcount').val(1);
 
     $('button#run').click(function () {
       run($('textarea#textinput').val());
     });
   }
 
-  function output () {
+  function output (output) {
     var outputLength = parseInt($('input#wordcount').val()),
         outputString = "";
 
     for (var i = 0; i < outputLength; i++) {
-      outputString += "a";
+      outputString += output;
     }
 
     $('textarea#textoutput').val(outputString);
@@ -49,8 +50,7 @@ window.app = (function () {
     }
 
     // output on html page
-    output();
-    console.log(calculateOutput(network, uniqueWordArray, ["In", "my", "first"]));
+    output(makePrediction(network, uniqueWordArray, ["In", "my", "first"]));
   }
 
   /* Initialises the neuronal network.
@@ -140,8 +140,20 @@ window.app = (function () {
   /*
    * Uses the network to make a prediction of the word that will most likely follow the words passed in precedingWords.
    */
-  function makePrediction () {
+  function makePrediction (network, uniqueWordArray, precedingWords) {
+    let outputLayer = calculateOutput(network, uniqueWordArray, precedingWords),
+        outputWord;
 
+    for (let i = 0; i < outputLayer.length; i++) {
+      if (i === 0) {
+        outputWord = uniqueWordArray[i];
+      }
+      else if (outputLayer[i] > outputLayer[i - 1]) {
+        outputWord = uniqueWordArray[i];
+      }
+    }
+
+    return outputWord;
   }
 
   function activationFunction (x, scaleY) {
