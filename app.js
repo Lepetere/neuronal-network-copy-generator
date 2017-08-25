@@ -71,7 +71,7 @@ window.app = (function () {
       for (var n = 0; n < numberOfNeurons; n++) {
         var connections = []; // the connections of one neuron to the next layer
         for (var c = 0; c < numberOfConnections; c++) {
-          connections.push(Math.random.apply(weightRange));
+          connections.push(activationFunction(Math.random.apply(weightRange), 1));
         }
         layer.push(connections);
       }
@@ -143,7 +143,7 @@ window.app = (function () {
   function makePrediction (network, uniqueWordArray, precedingWords) {
     let outputLayer = calculateOutput(network, uniqueWordArray, precedingWords),
         outputWord;
-
+    console.log(outputLayer);
     for (let i = 0; i < outputLayer.length; i++) {
       if (i === 0) {
         outputWord = uniqueWordArray[i];
