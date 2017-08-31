@@ -10,14 +10,11 @@ window.app = (function () {
     });
   }
 
-  function output (output) {
-    var outputLength = parseInt($('input#wordcount').val()),
-        outputString = "";
+  function getWordCount () {
+    return parseInt($('input#wordcount').val());
+  }
 
-    for (var i = 0; i < outputLength; i++) {
-      outputString += output;
-    }
-
+  function setWordOutput (outputString) {
     $('textarea#textoutput').val(outputString);
   }
 
@@ -36,21 +33,26 @@ window.app = (function () {
     var wordArray = splitTextInputIntoWords(textInput),
         uniqueWordArray = generateUniqueWordArray(wordArray),
         numberOfUniqueWords = uniqueWordArray.length,
-        numberOfInputs = 3, // how many words are used to train the network; this includes the output word plus (numberOfInputs - 1) preceding words
+        numberOfInputs = 3, // how many words are used to train the network; this includes the output word plus numberOfInputs - 1 preceding words
         numberOfHiddenLayers = 1, // 1 is usually the best default
         numberOfHiddenNeurons = Math.round(uniqueWordArray.length / 2), // experiment with this
         weightRange = [0, 1],
         learningRate = 0.2, // experiment with this
-        network = initialiseNeuronalNetwork (numberOfUniqueWords, numberOfInputs, numberOfHiddenLayers, numberOfHiddenNeurons, weightRange);
+        network = initialiseNeuronalNetwork(numberOfUniqueWords, numberOfInputs, numberOfHiddenLayers, numberOfHiddenNeurons, weightRange);
 
     // train network; start by selecting the first word (i = 1)
-    for (var i = 1; i <= wordArray.length; i++) {
-      var wordInput = getWordsForCurrentIteration(wordArray, numberOfInputs, i);
+    for (let i = 1; i <= wordArray.length; i++) {
+      let wordInput = getWordsForCurrentIteration(wordArray, numberOfInputs, i);
       trainNetwork(network, uniqueWordArray, wordInput, learningRate, i);
     }
 
-    // output on html page
-    output(uniqueWordArray[makePrediction(network, uniqueWordArray, ["In", "my", "first"])]);
+    // artificially generate text and output it on html page
+    var outputWords = [];
+    for (let i = getWordCount(); i > 0; i --) {
+      let arrayOfLastWords = getWordsForCurrentIteration(outputWords, numberOfInputs - 1, outputWords.length);
+      outputWords.push(uniqueWordArray[makePrediction(network, uniqueWordArray, arrayOfLastWords)]);
+    }
+    setWordOutput(outputWords.join(" "));
   }
 
   /* Initialises the neuronal network.
@@ -62,7 +64,7 @@ window.app = (function () {
   function initialiseNeuronalNetwork (numberOfUniqueWords, numberOfInputs, numberOfHiddenLayers, numberOfHiddenNeurons, weightRange) {
     var network = [];
 
-    // Intialise network with random weights between [weightRange] // TO DO: approximate normal distribution
+    // Intialise network with random weights between [weightRange]
     for (var l = 0; l < numberOfHiddenLayers + 1 /* +1 for input layer */; l++) {
       var layer = [],
           numberOfNeurons = l === 0 ? numberOfUniqueWords : numberOfHiddenNeurons,
@@ -94,12 +96,7 @@ window.app = (function () {
    */
   function trainNetwork (network, uniqueWordArray, wordInput, learningRate, iteration) {
     // 1st step: calculate network output by feeding in preceding words
-    const precedingWords = wordInput.reduce((output, word, i, wordInput) => {
-      if (i < wordInput.length - 1) {
-        output.push(word);
-      }
-      return output;
-    }, []);
+    const precedingWords = cutLastWord(wordInput);
     const prediction = calculateOutput(network, uniqueWordArray, precedingWords);
 
     // 2nd step: feed the error back into the network
@@ -118,7 +115,7 @@ window.app = (function () {
           layer[n][prediction] =- (learningRate / (network.length - l));
         }
       }
-    }
+    } // TODO: increase weights if the prediction was already correct
   }
 
   /*
@@ -224,6 +221,15 @@ window.app = (function () {
       return word.match(/\S/); // filter out whitespace
     });
   }
+
+  function cutLastWord (wordInput) {
+    return wordInput.reduce((output, word, i, wordInput) => {
+      if (i < wordInput.length - 1) {
+        output.push(word);
+      }
+      return output;
+    }, []);
+  };
 
   return {
     init: init
